@@ -46,10 +46,10 @@ export const signUp = async (req, res) => {
     await newUser.save();
 
     const token = genToken(newUser._id);
-
+console.log("Setting cookie with token:", token);
     res.cookie("token", token, {
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
@@ -98,7 +98,7 @@ export const signIn = async (req, res) => {
 
     res.cookie("token", token, {
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
