@@ -28,7 +28,7 @@ const SignUp = () => {
 
     try {
       // Make sure your .env has VITE_SERVER_URL=http://localhost:8000
-      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData);
+      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData,{withCredentials:true});
 
       // If signup succeeds (e.g., 201 Created), you can redirect
       console.log('Signup successful:', response.data);

@@ -1,5 +1,6 @@
 
 import {googleAuth, signIn, signOut, signUp,sendOtp,verifyOtp,resetPassword } from "../controllers/auth.controllers.js";
+import { isAuth } from "../middlewares/isAuth.js";
 import express from "express";
 const authRouter = express.Router();
 
