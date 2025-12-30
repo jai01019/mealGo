@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { Eye, EyeOff, UserPlus, Mail, Lock, Phone, UserCircle } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GoogleAuthProvider } from "firebase/auth";
 import {auth,app} from '../../utilis/firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { setUserData } from '../redux/userSlice';
+import { useDispatch } from 'react-redux';
 const SignUp = () => {
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '', 
@@ -31,8 +34,11 @@ const SignUp = () => {
       const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData,{withCredentials:true});
 
       // If signup succeeds (e.g., 201 Created), you can redirect
-      console.log('Signup successful:', response.data);
-      navigate('/signin'); // or '/dashboard' if auto-login
+      dispatch(setUserData(response.data));
+
+
+      //console.log('Signup successful:', response.data);
+      navigate('/'); // or '/dashboard' if auto-login
     } catch (error) {
       console.error('Signup error:', error);
       setError(
@@ -77,8 +83,8 @@ const handleGoogleSignUp = async () => {
 
     // 4. Send to your backend (similar to your handleSubmit logic)
     const {data} = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`, userData,{withCredentials:true});
-    navigate('/dashboard');
-console.log(data)
+    dispatch(setUserData(data));
+    navigate('/');
   } catch (error) { 
     setError(
         error.response?.data?.message || "An error occurred during Google Sign-In."

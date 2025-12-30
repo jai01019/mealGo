@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleAuthProvider } from "firebase/auth";
 import {auth,app} from '../../utilis/firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -12,7 +14,7 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
+const dispatch = useDispatch();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -24,8 +26,8 @@ const SignIn = () => {
         password
       });
 
+      dispatch(setUserData(response.data));
       // Assuming your backend returns a token or user data
-      console.log('Sign-in successful:', response.data);
 
       // Save token to localStorage (adjust based on your auth strategy)
       if (response.data.token) {
@@ -61,12 +63,11 @@ const SignIn = () => {
   
     };
 
-    console.log("User Data for Backend:", userData);
 
     // 4. Send to your backend (similar to your handleSubmit logic)
     const {data} = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`, userData,{withCredentials:true});
     navigate('/dashboard');
-console.log(data)
+    dispatch(setUserData(data));
   } catch (error) {
     console.error("Google Sign-Up Error:", error);
     if (error.code === 'auth/popup-closed-by-user') {
