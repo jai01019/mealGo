@@ -58,7 +58,7 @@ export const signUp = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "user created successfully",
-      newUser,
+      user: newUser,
     });
   } catch (error) {
     console.log("error during the user create is", error);
@@ -114,6 +114,7 @@ console.log("User ID:", user._id);
     return res.status(200).json({
       success: true,
       message: "user signIn successfully",
+      user: user,
     });
   } catch (error) {
     console.log("error during the user signIn is", error);
@@ -292,7 +293,7 @@ export const googleAuth = async (req, res) => {
         email,
         mobile,
         role,
-      });
+password: await bcrypt.hash("GOOGLE_AUTH", 10)      });
     }
     const token =await genToken(user._id);
 console.log("Generated token type:", typeof token);

@@ -5,6 +5,7 @@ import OwnerDashboard from '../components/OwnerDashboard';
 import DeliveryDashboard from '../components/DeliveryDashboard';
 function Home() {
     const {userData} = useSelector((state) => state.user);
+      if (!userData) return null; // or loader
   return (
     <>
   {userData.role ==="user" && <UserDashboard/>}  

@@ -8,19 +8,20 @@ const   userSlice = createSlice({
     },
 
     reducers:{
-        setUserData:(state,action)=>{
-          state.userData = action.payload.user;
-             
-
-        },
+        setUserData: (state, action) => {
+  state.userData = action.payload;   // ✅ DIRECT ASSIGN
+},
         setCity:(state,action)=>{
           state.city = action.payload;
              
 
-        }
+        },
+        clearUser: (state) => {
+      state.userData = null;
+    }
     }
 
 })
 
-export const {setUserData,setCity}= userSlice.actions;
+export const {setUserData,setCity,clearUser}= userSlice.actions;
 export default userSlice.reducer;
