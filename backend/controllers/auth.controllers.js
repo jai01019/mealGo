@@ -14,6 +14,7 @@ export const signUp = async (req, res) => {
       });
     }
     const user = await User.findOne({ email: email });
+
     if (user) {
       return res.status(400).json({
         success: false,
@@ -45,8 +46,9 @@ export const signUp = async (req, res) => {
     });
     await newUser.save();
 
-    const token = genToken(newUser._id);
-console.log("Setting cookie with token:", token);
+
+    let token =await genToken(newUser._id);
+
     res.cookie("token", token, {
       secure: false,
       sameSite: "lax",
@@ -56,7 +58,7 @@ console.log("Setting cookie with token:", token);
     return res.status(201).json({
       success: true,
       message: "user created successfully",
-      newUser,
+      user: newUser,
     });
   } catch (error) {
     console.log("error during the user create is", error);
@@ -66,6 +68,9 @@ console.log("Setting cookie with token:", token);
     });
   }
 };
+
+
+
 export const signIn = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -94,7 +99,11 @@ export const signIn = async (req, res) => {
       });
     }
 
-    const token = genToken(user._id);
+    const token =await genToken(user._id);
+
+    console.log("Generated token type:", typeof token);
+console.log("Generated token:", token);
+console.log("User ID:", user._id);
 
     res.cookie("token", token, {
       secure: false,
@@ -105,6 +114,7 @@ export const signIn = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "user signIn successfully",
+      user: user,
     });
   } catch (error) {
     console.log("error during the user signIn is", error);
@@ -114,7 +124,7 @@ export const signIn = async (req, res) => {
   }
 };
 
-export const signOut = async (res, req) => {
+export const signOut = async (req, res) => {
   try {
     res.clearCookie("token");
     return res.status(200).json({
@@ -278,14 +288,18 @@ export const googleAuth = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      user = User.create({
+      user =await User.create({
         fullName,
         email,
         mobile,
         role,
-      });
+password: await bcrypt.hash("GOOGLE_AUTH", 10)      });
     }
-    const token = genToken(user._id);
+    const token =await genToken(user._id);
+console.log("Generated token type:", typeof token);
+console.log("Generated token:", token);
+console.log("User ID:", user._id);
+
     res.cookie("token", token, {
       secure: false,
       sameSite: "strict",

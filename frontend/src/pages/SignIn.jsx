@@ -1,17 +1,16 @@
+
+
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../utilis/firebase";
 import { useState } from "react";
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider } from "firebase/auth";
-import {auth,app} from '../../utilis/firebase';
-import { signInWithPopup } from 'firebase/auth';
+
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,61 +18,84 @@ const SignIn = () => {
     setError('');
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signin`, {
-        email,
-        password
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL || 'http://localhost:8000'}/api/auth/signin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
       });
 
-      // Assuming your backend returns a token or user data
-      console.log('Sign-in successful:', response.data);
+      const data = await response.json();
+      
+      // DEBUG: Check the response structure
+      console.log("=== SIGNIN RESPONSE ===");
+      console.log("Full Response:", data);
+      console.log("User object:", data.user);
+      console.log("Role:", data.user?.role || data.role);
+      console.log("======================");
 
-      // Save token to localStorage (adjust based on your auth strategy)
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      if (!response.ok) {
+        throw new Error(data.message || 'Sign-in failed');
       }
 
-      // Redirect to dashboard or home
-      navigate('/dashboard'); // or wherever you want
+      // Store user data - adjust based on your backend response structure
+      // If backend returns { user: {...}, token: "..." }
+      const userData = data.user || data;
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
+
+const role = data.user.role;
+
+if (role === "user") window.location.href = "/";
+else if (role === "owner") window.location.href = "/";
+else if (role === "deliveryBoy") window.location.href = "/";
+
+      
     } catch (err) {
       console.error('Sign-in error:', err);
-      setError(
-        err.response?.data?.message ||
-        'Sign-in failed. Please check your email and password.'
-      );
+      setError(err.message || 'Sign-in failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
- const handleGoogleSignIn = async () => {
 
-
-  const provider = new GoogleAuthProvider();
-
+const handleGoogleSignIn = async () => {
   try {
-    // 2. Trigger the Google Popup
+    const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    
-    // 3. Prepare data to send to your backend
-    // This combines the Google info with the mobile number from your form
+
     const userData = {
+      fullName: result.user.displayName,
       email: result.user.email,
-  
+      mobile: "0000000000", // or ask user later
+      role: "user"
     };
 
-    console.log("User Data for Backend:", userData);
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(userData),
+      }
+    );
 
-    // 4. Send to your backend (similar to your handleSubmit logic)
-    const {data} = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`, userData,{withCredentials:true});
-    navigate('/dashboard');
-console.log(data)
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message || "Google login failed");
+
+    // Redirect
+    window.location.href = "/";
   } catch (error) {
-    console.error("Google Sign-Up Error:", error);
-    if (error.code === 'auth/popup-closed-by-user') {
-      alert("Sign-in cancelled.");
-    } else {
-      alert("An error occurred during Google Sign-In.");
-    }
+    console.error("Google Sign-In Error:", error);
+    setError("Google sign-in failed");
   }
 };
 
@@ -122,12 +144,10 @@ console.log(data)
             </button>
           </div>
 
-
-                {/* Forgot Password Link */}
           <div className="text-right">
             <button
               type="button"
-              onClick={() => navigate('/forget-password')}
+              onClick={() => window.location.href = '/forget-password'}
               className="text-cyan-400 text-sm hover:underline"
             >
               Forgot password?
@@ -145,10 +165,8 @@ console.log(data)
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
-          {error && <p className="text-red-500 text-center mt-2">{error}</p>}
         </form>
 
-        {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-600"></div>
@@ -158,7 +176,6 @@ console.log(data)
           </div>
         </div>
 
-        {/* Google Sign In Button */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -174,9 +191,9 @@ console.log(data)
         </button>
 
         <p className="text-center text-slate-400 mt-6 text-sm">
-          Don’t have an account?{' '}
+          Don't have an account?{' '}
           <button
-            onClick={() => navigate('/signup')}
+            onClick={() => window.location.href = '/signup'}
             className="text-cyan-400 font-semibold hover:underline"
           >
             Sign up

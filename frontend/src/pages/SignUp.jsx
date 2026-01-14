@@ -3,9 +3,12 @@ import { Eye, EyeOff, UserPlus, Mail, Lock, Phone, UserCircle } from 'lucide-rea
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GoogleAuthProvider } from "firebase/auth";
-import {auth,app} from '../../utilis/firebase';
+import {auth} from '../../utilis/firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { setUserData } from '../redux/userSlice';
+import { useDispatch } from 'react-redux';
 const SignUp = () => {
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '', 
@@ -28,11 +31,22 @@ const SignUp = () => {
 
     try {
       // Make sure your .env has VITE_SERVER_URL=http://localhost:8000
-      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData,{withCredentials:true});
+     const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData,{withCredentials:true});
+
+console.log("=== SIGNUP RESPONSE DEBUG ===");
+console.log("Full response:", response.data);
+console.log("============================");
+
+const userData = response.data.user || response.data;
+dispatch(setUserData(userData));
+
+// navigate('/dashboard');
 
       // If signup succeeds (e.g., 201 Created), you can redirect
-      console.log('Signup successful:', response.data);
-      navigate('/signin'); // or '/dashboard' if auto-login
+dispatch(setUserData(response.data.user));
+
+      //console.log('Signup successful:', response.data);
+      navigate('/'); // or '/dashboard' if auto-login
     } catch (error) {
       console.error('Signup error:', error);
       setError(
@@ -77,8 +91,8 @@ const handleGoogleSignUp = async () => {
 
     // 4. Send to your backend (similar to your handleSubmit logic)
     const {data} = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`, userData,{withCredentials:true});
-    navigate('/dashboard');
-console.log(data)
+    dispatch(setUserData(data.user));
+    navigate('/');
   } catch (error) { 
     setError(
         error.response?.data?.message || "An error occurred during Google Sign-In."
