@@ -4,13 +4,15 @@ import { Shop } from "../models/shop.model.js";
 export const createEditShop = async (req, res) => {
   
   try {
-    const { name, state, address, city, items } = req.body;
+    const { name, state, address, city, items,role } = req.body;
     if (!name || !state || !address || !city) {
   return res.status(400).json({
     success: false,
     message: "All required fields must be provided",
   });
 }
+
+
 
     let image;
     if (req.file) {
@@ -32,6 +34,8 @@ export const createEditShop = async (req, res) => {
   message: "owner did not found",
 });
     }
+
+
 
     let shop = await Shop.findOne({ owner });
     if (shop) {
@@ -80,3 +84,40 @@ shop.address = address;
      });
    }
   }
+
+
+export const getMyShop=async (req,res)=>{
+    try{
+      const userId = req.user?.userId;
+   console.log("checking the user id in getMyShop Api:,",userId)
+if (!userId) {
+ return res.status(400).json({
+success: false,
+message: "owner did not found",
+})
+}
+
+    const shop = await Shop.findOne({owner:userId}).populate("owner");
+    if(!shop){
+       return res.status(400).json({
+success: false,
+message: "shop did not found",
+})
+    }
+
+  return res.status(200).json({
+     success: true,
+     message: "Shop fetch successfully ",
+     shop,
+   });
+
+
+    }
+    catch(error){
+      console.log("error during getMyShop:",error)
+    return res.status(400).json({
+success: false,
+message: "getMyShop did not found",
+})
+    }
+  } 
