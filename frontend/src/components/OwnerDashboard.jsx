@@ -1,17 +1,16 @@
 import React from 'react'
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import axios from 'axios';
 import Navbar from './Navbar';  
 import { clearUser } from '../redux/userSlice'; // Update with your actual path
-
-function OwnerDashboard() {
+import { Utensils, ChefHat, Users, TrendingUp, ArrowRight } from 'lucide-react';function OwnerDashboard() {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-   const { userData } = useSelector((state) => state.user);
+   const { myShopData } = useSelector((state) => state.owner);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();   
@@ -37,42 +36,112 @@ function OwnerDashboard() {
       }
     };
   
-
+ const handleNavigate = () => {
+    navigate('/create-edit-shop')
+  };
 
 return (
-      
-        <div className="min-h-screen bg-[#0f172a] text-white font-sans">
+      <>
+        <div className=" min-h-screen bg-[#0f172a] text-white font-sans flex flex-col">
           <Navbar 
             isSearchOpen={isSearchOpen} 
             setIsSearchOpen={setIsSearchOpen} 
             onLogout={handleLogout} 
-          />
+          />  
     
-          <main className={`p-6 md:p-8 max-w-7xl mx-auto transition-all duration-300 ${isSearchOpen ? 'blur-sm scale-[0.98]' : 'blur-0 scale-100'}`}>
-            <header className="mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                Welcome back, <span className="text-[#00d1ff]">{userData?.fullName?.split(' ')[0] || "User"}!</span>
-                
-              </h2>
-              <p className="text-gray-400 mt-2">Hungry? Explore the best food in your city.</p>
-            </header>
-    
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="bg-[#1e293b] border border-slate-700 rounded-2xl p-6 hover:border-[#00d1ff]/50 transition-all cursor-pointer group">
-                  <div className="w-12 h-12 bg-[#0f172a] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Bell className="text-[#00d1ff]" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Order Tracking</h3>
-                  <p className="text-gray-400 text-sm">Update on your recent order #{item}09</p>
+    {/* {!myShopData && ( */}
+<div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-4">
+      <div className="flex justify-center w-full max-w-6xl">
+        {/* Enhanced Card with Gradient Background */}
+        <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-8 sm:p-12 shadow-2xl max-w-2xl w-full border border-slate-700/50 overflow-hidden">
+          
+          {/* Decorative Background Elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#ff4d24]/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full blur-3xl"></div>
+          
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Icon with animated gradient background */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] rounded-3xl blur-xl opacity-50 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] p-6 rounded-3xl shadow-lg">
+                  <Utensils 
+                    size={56} 
+                    strokeWidth={2.5} 
+                    className="text-white" 
+                  />
                 </div>
-              ))}
+              </div>
             </div>
-          </main>
-        </div>
 
-            )
+            {/* Heading */}
+            <h2 className="text-white text-3xl sm:text-4xl font-bold mb-4 text-center">
+              Launch Your Restaurant
+            </h2>
+            
+            {/* Subheading */}
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 text-center max-w-lg mx-auto">
+              Join our food delivery platform and reach thousands of hungry customers every day. Start growing your business today!
+            </p>
+
+            {/* Feature Pills */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Users className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Reach</p>
+                  <p className="text-sm font-semibold text-white">1000+ Users</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Growth</p>
+                  <p className="text-sm font-semibold text-white">Fast Setup</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <ChefHat className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Quality</p>
+                  <p className="text-sm font-semibold text-white">Top Rated</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button with enhanced design */}
+            <button 
+              onClick={handleNavigate}
+              className="group relative w-full bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] hover:from-[#ff6b47] hover:to-[#ff4d24] text-white font-bold py-4 px-12 rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+              <span className="relative flex items-center justify-center gap-2 text-lg">
+                Get Started
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+
+            {/* Footer note */}
+            <p className="text-center text-slate-500 text-sm mt-6">
+              Free to join • No hidden fees • Start earning today
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+{/* )} */}
+ </div>
+</>
+ )
     
 }
 

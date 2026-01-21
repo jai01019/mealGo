@@ -4,12 +4,13 @@ const   userSlice = createSlice({
     initialState:{
         userData:null,
         city:null,
-
+ loading: true, 
     },
 
     reducers:{
         setUserData: (state, action) => {
   state.userData = action.payload;   // ✅ DIRECT ASSIGN
+   state.loading = false; 
 },
         setCity:(state,action)=>{
           state.city = action.payload;
@@ -18,6 +19,7 @@ const   userSlice = createSlice({
         },
         clearUser: (state) => {
       state.userData = null;
+       state.loading = false; 
     }
     }
 
