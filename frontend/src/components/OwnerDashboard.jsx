@@ -12,9 +12,10 @@ import { Utensils, ChefHat, Users, TrendingUp, ArrowRight } from 'lucide-react';
 
    const { myShopData } = useSelector((state) => state.owner);
 
+
   const dispatch = useDispatch();
   const navigate = useNavigate();   
-    const handleLogout = async () => {
+    const handleLogout = async () => {  
       try {
         // Use GET to match your backend: authRouter.get("/signout", signOut)
         const response = await axios.get(
@@ -49,7 +50,7 @@ return (
             onLogout={handleLogout} 
           />  
     
-    {/* {!myShopData && ( */}
+     {!myShopData && ( 
 <div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-4">
       <div className="flex justify-center w-full max-w-6xl">
         {/* Enhanced Card with Gradient Background */}
@@ -138,7 +139,7 @@ return (
         </div>
       </div>
     </div>
-{/* )} */}
+ )} 
  </div>
 </>
  )

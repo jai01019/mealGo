@@ -4,6 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 function CreateEditShop() {
+  
+  const { city, state, address } = useSelector((state) => state.user);
+  console.log("CreateEditShop - User Data:", city, state, address);
+
   const navigate = useNavigate();
   const location = useLocation();
   const { myShopData } = useSelector((state) => state.owner || {});
@@ -36,20 +40,32 @@ function CreateEditShop() {
   ];
 
   // Load existing shop data if editing
-  useEffect(() => {
-    if (myShopData) {
-      setIsEditMode(true);
-      setShopData({
-        name: myShopData.name || '',
-        state: myShopData.state || '',
-        address: myShopData.address || '',
-        city: myShopData.city || '',
-        image: myShopData.image || '',
-      });
-      setImagePreview(myShopData.image || '');
-      setItems(myShopData.items || []);
-    }
-  }, [myShopData]);
+useEffect(() => {
+  // 🟢 EDIT MODE → use shop data
+  if (myShopData) {
+    setIsEditMode(true);
+    setShopData({
+      name: myShopData.name || '',
+      state: myShopData.state || '',
+      address: myShopData.address || '',
+      city: myShopData.city || '',
+      image: myShopData.image || '',
+    });
+    setImagePreview(myShopData.image || '');
+    setItems(myShopData.items || []);
+    return;
+  }
+
+  // 🟢 CREATE MODE → auto-fill from Redux Geo
+  setShopData(prev => ({
+    ...prev,
+    city: prev.city || city || '',
+    state: prev.state || state || '',
+    address: prev.address || address || '',
+  }));
+
+}, [myShopData, city, state, address]);
+
 
   const handleShopChange = (e) => {
     const { name, value } = e.target;
