@@ -1,149 +1,554 @@
+
 import React from 'react'
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Edit2, MapPin, Store, Package, TrendingUp, DollarSign, Utensils, ChefHat, Users, ArrowRight, X } from 'lucide-react';
 import axios from 'axios';
 import Navbar from './Navbar';  
-import { clearUser } from '../redux/userSlice'; // Update with your actual path
-import { Utensils, ChefHat, Users, TrendingUp, ArrowRight } from 'lucide-react';function OwnerDashboard() {
+import { clearUser } from '../redux/userSlice';
 
+function OwnerDashboard() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-   const { myShopData } = useSelector((state) => state.owner);
-
-
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Snacks',
+    price: '',
+    foodType: 'veg',
+    image: null
+  });
+  const [imagePreview, setImagePreview] = useState(null);
+  
+  const { myShopData } = useSelector((state) => state.owner);
   const dispatch = useDispatch();
-  const navigate = useNavigate();   
-    const handleLogout = async () => {  
-      try {
-        // Use GET to match your backend: authRouter.get("/signout", signOut)
-        const response = await axios.get(
-          `${import.meta.env.VITE_SERVER_URL}/api/auth/signout`,
-          { withCredentials: true }
-        );
+  const navigate = useNavigate();
   
-        if (response.data.success) {
-          console.log("Logged out successfully");
-  
-          // 1. Clear Redux State so Protected Routes know the user is gone
-          dispatch(clearUser()); 
-  
-          // 2. Navigate to Sign In page immediately
-          navigate('/signin'); 
-        }
-      } catch (error) {
-        console.error("Logout failed:", error);
+  const handleLogout = async () => {  
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/api/auth/signout`,
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        console.log("Logged out successfully");
+        dispatch(clearUser()); 
+        navigate('/signin'); 
       }
-    };
-  
- const handleNavigate = () => {
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const handleNavigate = () => {
     navigate('/create-edit-shop')
   };
 
-return (
-      <>
-        <div className=" min-h-screen bg-[#0f172a] text-white font-sans flex flex-col">
-          <Navbar 
-            isSearchOpen={isSearchOpen} 
-            setIsSearchOpen={setIsSearchOpen} 
-            onLogout={handleLogout} 
-          />  
-    
-     {!myShopData && ( 
-<div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-4">
-      <div className="flex justify-center w-full max-w-6xl">
-        {/* Enhanced Card with Gradient Background */}
-        <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-8 sm:p-12 shadow-2xl max-w-2xl w-full border border-slate-700/50 overflow-hidden">
-          
-          {/* Decorative Background Elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#ff4d24]/10 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full blur-3xl"></div>
-          
-          {/* Content */}
-          <div className="relative z-10">
-            {/* Icon with animated gradient background */}
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] rounded-3xl blur-xl opacity-50 animate-pulse"></div>
-                <div className="relative bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] p-6 rounded-3xl shadow-lg">
-                  <Utensils 
-                    size={56} 
-                    strokeWidth={2.5} 
-                    className="text-white" 
+  const handleEditShop = () => {
+    navigate('/create-edit-shop');
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }));
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddItemSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('foodType', formData.foodType);
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_URL}/api/item/create`,
+        formDataToSend,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        console.log("Item created successfully");
+        // Reset form
+        setFormData({
+          name: '',
+          category: 'Snacks',
+          price: '',
+          foodType: 'veg',
+          image: null
+        });
+        setImagePreview(null);
+        setShowAddItemModal(false);
+        
+        // Optionally refresh the page or update Redux state
+        //window.location.reload();
+      }
+    } catch (error) {
+      console.error("Failed to create item:", error);
+      alert(error.response?.data?.message || "Failed to create item");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Mock stats - replace with actual data from your backend
+  const stats = {
+    totalItems: myShopData?.items?.length || 0,
+    totalOrders: 234,
+    revenue: 12450,
+    rating: 4.5
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Pizza': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+      'Burgers': 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+      'Desserts': 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+      'Main Course': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+      'Snacks': 'bg-green-500/10 text-green-400 border-green-500/30',
+      'South Indian': 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+      'North Indian': 'bg-red-500/10 text-red-400 border-red-500/30',
+      'Chinese': 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+      'Fast Food': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      'Sandwiches': 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+    };
+    return colors[category] || 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+  };
+
+  const categories = [
+    "Snacks",
+    "Main Course",
+    "Desserts",
+    "Pizza",
+    "Burgers",
+    "Sandwiches",
+    "South Indian",
+    "North Indian",
+    "Chinese",
+    "Fast Food",
+    "Others"
+  ];
+
+  return (
+    <>
+      <div className="min-h-screen bg-[#0f172a] text-white font-sans flex flex-col">
+        <Navbar 
+          isSearchOpen={isSearchOpen} 
+          setIsSearchOpen={setIsSearchOpen} 
+          onLogout={handleLogout} 
+        />
+  
+        {!myShopData && ( 
+          <div className="min-h-screen bg-[#0f172a] text-white font-sans flex items-center justify-center p-4">
+            <div className="flex justify-center w-full max-w-6xl">
+              <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-8 sm:p-12 shadow-2xl max-w-2xl w-full border border-slate-700/50 overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#ff4d24]/10 to-transparent rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full blur-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex justify-center mb-6">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] rounded-3xl blur-xl opacity-50 animate-pulse"></div>
+                      <div className="relative bg-gradient-to-br from-[#ff4d24] to-[#ff6b47] p-6 rounded-3xl shadow-lg">
+                        <Utensils size={56} strokeWidth={2.5} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <h2 className="text-white text-3xl sm:text-4xl font-bold mb-4 text-center">
+                    Launch Your Restaurant
+                  </h2>
+                  
+                  <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 text-center max-w-lg mx-auto">
+                    Join our food delivery platform and reach thousands of hungry customers every day. Start growing your business today!
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+                    <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                      <div className="p-2 bg-blue-500/10 rounded-lg">
+                        <Users className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Reach</p>
+                        <p className="text-sm font-semibold text-white">1000+ Users</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                      <div className="p-2 bg-green-500/10 rounded-lg">
+                        <TrendingUp className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Growth</p>
+                        <p className="text-sm font-semibold text-white">Fast Setup</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
+                      <div className="p-2 bg-purple-500/10 rounded-lg">
+                        <ChefHat className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Quality</p>
+                        <p className="text-sm font-semibold text-white">Top Rated</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleNavigate}
+                    className="group relative w-full bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] hover:from-[#ff6b47] hover:to-[#ff4d24] text-white font-bold py-4 px-12 rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <span className="relative flex items-center justify-center gap-2 text-lg">
+                      Get Started
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </button>
+
+                  <p className="text-center text-slate-500 text-sm mt-6">
+                    Free to join • No hidden fees • Start earning today
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {myShopData && (
+          <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+            {/* Shop Header Card */}
+            <div className="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-700/50 overflow-hidden mb-8">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#ff4d24]/5 to-transparent rounded-full blur-3xl"></div>
+              
+              <div className="relative z-10 flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                  <img 
+                    src={myShopData.image} 
+                    alt={myShopData.name}
+                    className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-2xl object-cover border-2 border-slate-700"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Heading */}
-            <h2 className="text-white text-3xl sm:text-4xl font-bold mb-4 text-center">
-              Launch Your Restaurant
-            </h2>
-            
-            {/* Subheading */}
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 text-center max-w-lg mx-auto">
-              Join our food delivery platform and reach thousands of hungry customers every day. Start growing your business today!
-            </p>
-
-            {/* Feature Pills */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Users className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Reach</p>
-                  <p className="text-sm font-semibold text-white">1000+ Users</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Growth</p>
-                  <p className="text-sm font-semibold text-white">Fast Setup</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-slate-700/50">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <ChefHat className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Quality</p>
-                  <p className="text-sm font-semibold text-white">Top Rated</p>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">{myShopData.name}</h1>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <MapPin className="w-4 h-4 text-[#ff4d24]" />
+                        <p className="text-sm sm:text-base">{myShopData.address}, {myShopData.city}, {myShopData.state}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleEditShop}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-colors border border-slate-600"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* CTA Button with enhanced design */}
-            <button 
-              onClick={handleNavigate}
-              className="group relative w-full bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] hover:from-[#ff6b47] hover:to-[#ff4d24] text-white font-bold py-4 px-12 rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-              <span className="relative flex items-center justify-center gap-2 text-lg">
-                Get Started
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <Package className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <p className="text-slate-400 text-sm">Total Items</p>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{stats.totalItems}</p>
+              </div>
 
-            {/* Footer note */}
-            <p className="text-center text-slate-500 text-sm mt-6">
-              Free to join • No hidden fees • Start earning today
-            </p>
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-2xl p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-green-400" />
+                  </div>
+                  <p className="text-slate-400 text-sm">Orders</p>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{stats.totalOrders}</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <p className="text-slate-400 text-sm">Revenue</p>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-white">₹{stats.revenue}</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-2xl p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-yellow-500/20 rounded-lg">
+                    <Store className="w-5 h-5 text-yellow-400" />
+                  </div>
+                  <p className="text-slate-400 text-sm">Rating</p>
+                </div>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{stats.rating} ⭐</p>
+              </div>
+            </div>
+
+            {/* Menu Section */}
+            <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-700/50">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">Your Menu</h2>
+                <button
+                  onClick={() => setShowAddItemModal(true)}
+                  className="group flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] hover:from-[#ff6b47] hover:to-[#ff4d24] rounded-xl transition-all duration-300 active:scale-95 shadow-lg shadow-orange-500/25"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="font-semibold">Add Item</span>
+                </button>
+              </div>
+
+              {(!myShopData.items || myShopData.items.length === 0) ? (
+                <div className="text-center py-16">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-6 bg-slate-800/50 rounded-full">
+                      <Utensils className="w-16 h-16 text-slate-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-400 mb-2">No items yet</h3>
+                  <p className="text-slate-500 mb-6">Start building your menu by adding your first item</p>
+                  <button
+                    onClick={() => setShowAddItemModal(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] rounded-xl font-semibold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add First Item
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {myShopData.items.map((item, index) => (
+                    <div
+                      key={item._id || index}
+                      className="group relative bg-slate-800/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700/50 hover:border-slate-600 transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/50"
+                    >
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                        
+                        <div className="absolute top-3 left-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            item.foodType === 'veg' 
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          }`}>
+                            {item.foodType === 'veg' ? '🌱 Veg' : '🍗 Non-Veg'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-lg font-bold text-white line-clamp-1">{item.name}</h3>
+                          <span className="text-xl font-bold text-[#ff4d24]">₹{item.price}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <span className={`px-3 py-1 rounded-lg text-xs font-medium border ${getCategoryColor(item.category)}`}>
+                            {item.category}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Add Item Modal */}
+        {showAddItemModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-slate-700/50 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">Add New Item</h2>
+                <button
+                  onClick={() => setShowAddItemModal(false)}
+                  className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddItemSubmit} className="space-y-6">
+                {/* Item Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Item Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#ff4d24] transition-colors"
+                    placeholder="e.g., Margherita Pizza"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#ff4d24] transition-colors"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Price (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    required
+                    min="0"
+                    step="1"
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-[#ff4d24] transition-colors"
+                    placeholder="e.g., 299"
+                  />
+                </div>
+
+                {/* Food Type */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Food Type *
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="foodType"
+                        value="veg"
+                        checked={formData.foodType === 'veg'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-[#ff4d24]"
+                      />
+                      <span className="text-white">🌱 Veg</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="foodType"
+                        value="non veg"
+                        checked={formData.foodType === 'non veg'}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-[#ff4d24]"
+                      />
+                      <span className="text-white">🍗 Non-Veg</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Item Image *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    required
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#ff4d24] file:text-white file:cursor-pointer hover:file:bg-[#ff6b47] transition-colors"
+                  />
+                  {imagePreview && (
+                    <div className="mt-4">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-xl border border-slate-700"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddItemModal(false)}
+                    className="flex-1 px-6 py-3 bg-slate-700/50 hover:bg-slate-700 rounded-xl font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#ff4d24] to-[#ff6b47] hover:from-[#ff6b47] hover:to-[#ff4d24] rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Adding...' : 'Add Item'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
- )} 
- </div>
-</>
- )
-    
+    </>
+  );
 }
 
-export default OwnerDashboard
+export default OwnerDashboard;

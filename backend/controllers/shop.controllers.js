@@ -1,6 +1,6 @@
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Shop } from "../models/shop.model.js";
-
+import { Item } from "../models/item.model.js";
 export const createEditShop = async (req, res) => {
   
   try {
@@ -97,7 +97,7 @@ message: "owner did not found",
 })
 }
 
-    const shop = await Shop.findOne({owner:userId}).populate("owner");
+    const shop = await Shop.findOne({owner:userId}).populate("owner").populate("items");
     if(!shop){
        return res.status(400).json({
 success: false,
@@ -121,3 +121,46 @@ message: "getMyShop did not found",
 })
     }
   } 
+
+
+
+  export const getAllItemsOfShop=async (req,res)=>{
+    try{
+           const userId = req.user?.userId;
+   console.log("checking the user id in getMyShop Api:,",userId)
+if (!userId) {
+ return res.status(400).json({
+success: false,
+message: "owner did not found",
+})
+}
+ const shop = await Shop.findOne({owner:userId});
+    if(!shop){
+       return res.status(400).json({  
+success: false,
+message: "shop did not found",
+})
+    }
+    const items=await Item.find({shop:shop._id}).populate("shop");
+    if(!items){ 
+        return res.status(400).json({
+success: false,
+message: "items did not found",
+})
+    } 
+
+     return res.status(200).json({
+     success: true,
+     message: "Items fetch successfully ",
+     items,
+   });
+    }
+    catch(error){
+      console.log("error during getAllItemsOfShop:",error)
+    return res.status(400).json({
+success: false,
+message: "getAllItemsOfShop did not found",
+})
+    } 
+  }
+
