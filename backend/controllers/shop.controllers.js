@@ -97,7 +97,7 @@ message: "owner did not found",
 })
 }
 
-    const shop = await Shop.findOne({owner:userId}).populate("owner");
+    const shop = await Shop.findOne({owner:userId}).populate("owner").populate("items");
     if(!shop){
        return res.status(400).json({
 success: false,
