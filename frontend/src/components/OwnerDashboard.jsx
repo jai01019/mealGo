@@ -1,12 +1,14 @@
 
 import React from 'react'
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, MapPin, Store, Package, TrendingUp, DollarSign, Utensils, ChefHat, Users, ArrowRight, X } from 'lucide-react';
 import axios from 'axios';
 import Navbar from './Navbar';  
 import { clearUser } from '../redux/userSlice';
+import { setShopData } from '../redux/ownerSlice';
 
 function OwnerDashboard() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -25,6 +27,40 @@ function OwnerDashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
+
+// 🟢 AUTO REFRESH SHOP DATA WHEN DASHBOARD LOADS
+useEffect(() => {
+
+  const fetchShop = async () => {
+
+    try {
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SERVER_URL}/api/shop/getShop`,
+        {
+          credentials: 'include',
+          cache: 'no-store' // 🔴 avoid cache
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        dispatch(setShopData(data.shop)); // Update Redux
+      }
+
+    } catch (err) {
+      console.error("Failed to fetch shop:", err);
+    }
+
+  };
+
+  fetchShop();
+
+}, []); // Run once on page load
+
+
+
   const handleLogout = async () => {  
     try {
       const response = await axios.get(
@@ -102,6 +138,17 @@ function OwnerDashboard() {
 
       if (response.data.success) {
         console.log("Item created successfully");
+        const createdItem = response.data.item;
+
+        // 🔹 Update Redux so all items (old + newly created) show in UI
+        if (myShopData) {
+          const existingItems = myShopData.items || [];
+          const updatedShop = {
+            ...myShopData,
+            items: [...existingItems, createdItem],
+          };
+          dispatch(setShopData(updatedShop));
+        }
         // Reset form
         setFormData({
           name: '',

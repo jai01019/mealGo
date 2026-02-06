@@ -1,5 +1,6 @@
 import React, { use } from 'react'
 import {Navigate, Route,Routes} from 'react-router-dom'
+import { Toaster } from 'react-hot-toast';
 import CreateEditShop from './pages/CreateEditShop'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
@@ -20,6 +21,7 @@ const { userData, loading } = useSelector((state) => state.user);
   } 
 return (
 <>
+  <Toaster position="top-right" />
   
     <Routes>
     <Route  path="/signup"  element={!userData ?<SignUp/> : <Navigate to="/" />}/>

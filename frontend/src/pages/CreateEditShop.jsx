@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X, Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setShopData } from '../redux/ownerSlice';
+
+import toast from 'react-hot-toast';
 
 function CreateEditShop() {
   
@@ -9,6 +12,7 @@ function CreateEditShop() {
   console.log("CreateEditShop - User Data:", city, state, address);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const { myShopData } = useSelector((state) => state.owner || {});
   
@@ -31,6 +35,13 @@ function CreateEditShop() {
     category: '',
     price: '',
     foodType: '',
+  });
+
+  // State for delete confirmation modal
+  const [deleteConfirm, setDeleteConfirm] = useState({
+      show: false,
+      itemId: null,
+      fullItem: null
   });
 
   const categories = [
@@ -102,7 +113,10 @@ useEffect(() => {
 
   const addItem = () => {
     if (currentItem.name && currentItem.category && currentItem.price && currentItem.foodType) {
-      setItems(prev => [...prev, { ...currentItem, id: Date.now() }]);
+      // setItems(prev => [...prev, { ...currentItem, id: Date.now() }]);
+
+      setItems(prev => [...prev, { ...currentItem }]);
+
       setCurrentItem({
         name: '',
         image: '',
@@ -114,41 +128,173 @@ useEffect(() => {
     }
   };
 
-  const removeItem = (id) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+
+  const triggerDelete = (id, item) => {
+      setDeleteConfirm({
+          show: true,
+          itemId: id,
+          fullItem: item
+      });
   };
+
+  const confirmDelete = async () => {
+    const { itemId: id, fullItem: item } = deleteConfirm;
+    
+    // If item has _id, it is from DB -> delete from server
+    if (item._id) {
+       try {
+         const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/item/delete/${item._id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+         });
+         
+         const data = await response.json();
+         if(response.ok) {
+             setItems(prev => prev.filter(i => i._id !== id));
+             toast.success(data.message || "Item deleted");
+         } else {
+             toast.error(data.message || "Failed to delete item");
+         }
+       } catch (error) {
+         console.error("Error deleting item:", error);
+         toast.error("Error deleting item");
+       }
+    } else {
+       // If no _id, it's a local unsaved item -> just remove from state
+       setItems(prev => prev.filter(i => i.id !== id));
+       toast.success("Item removed");
+    }
+    // Close modal
+    setDeleteConfirm({ show: false, itemId: null, fullItem: null });
+  };
+
+
 
   const handleSubmit = async () => {
     // Validate required fields
     if (!shopData.name || !shopData.city || !shopData.state || !shopData.address || !shopData.image) {
-      alert('Please fill all required fields');
+      toast.error('Please fill all required fields');
       return;
     }
 
-    const payload = {
-      ...shopData,
-      items: items.map(item => ({
+    try {
+      const formData = new FormData();
+      
+      // Add shop details
+      formData.append('name', shopData.name);
+      formData.append('city', shopData.city);
+      formData.append('state', shopData.state);
+      formData.append('address', shopData.address);
+      
+      // Convert base64 image to file if it's a new upload
+      if (shopData.image && shopData.image.startsWith('data:image')) {
+        const response = await fetch(shopData.image);
+        const blob = await response.blob();
+        const file = new File([blob], 'shop-image.jpg', { type: blob.type });
+        formData.append('image', file);
+      }
+      
+      // Add items as JSON string
+      const itemsData = items.map(item => ({
         name: item.name,
         image: item.image,
         category: item.category,
         price: item.price,
         foodType: item.foodType,
-      }))
-    };
+      }));
+      formData.append('items', JSON.stringify(itemsData));
 
-    console.log('Shop Data:', payload);
-    
-    // Here you would make your API call
-    // if (isEditMode) {
-    //   await updateShop(shopId, payload);
-    // } else {
-    //   await createShop(payload);
-    // }
+      
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/shop/create-edit`, {
+        method: 'POST',
+        // 🔹 Important: send cookies (JWT) with the request
+        credentials: 'include',
+        body: formData,
+      });
 
-    alert(isEditMode ? 'Shop updated successfully!' : 'Shop created successfully!');
-    navigate('/');
+// 🟢 Check server status first
+      /* 
+      // PREVIOUS CODE (COMMENTED OUT)
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      // 🟢 Try to read JSON safely (optional)
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch (err) {
+        console.warn("Response is not JSON");
+      }
+
+      // 🟢 Treat HTTP OK as success
+      if (response.ok) {
+        const freshResponse = await fetch(
+          `${import.meta.env.VITE_SERVER_URL}/api/shop/getShop`,
+          {
+            credentials: 'include',
+            cache: 'no-store' // 👈 important
+          }
+        );
+
+        const freshData = await freshResponse.json();
+
+        if (freshData.success) {
+          // 1️⃣ Update Redux
+          dispatch(setShopData(freshData.shop));
+
+          // 2️⃣ Wait one tick then navigate
+          setTimeout(() => {
+            navigate('/');
+          }, 0);
+        }
+      } else {
+        alert(data.message || 'Something went wrong');
+      }
+      */
+
+      // 🟢 NEW CODE
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Server error");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+         // Attempt to refresh data, but don't block navigation on it
+         try {
+             const freshResponse = await fetch(
+               `${import.meta.env.VITE_SERVER_URL}/api/shop/getShop`,
+               {
+                 credentials: 'include',
+                 cache: 'no-store'
+               }
+             );
+             if (freshResponse.ok) {
+                 const freshData = await freshResponse.json();
+                 if (freshData.success) {
+                     dispatch(setShopData(freshData.shop));
+                 }
+             }
+         } catch (refreshError) {
+             console.warn("Failed to refresh shop data:", refreshError);
+         }
+
+         // Navigate regardless of refresh status
+         setTimeout(() => {
+             navigate('/');
+         }, 0);
+      } else {
+         toast.error(data.message || 'Update failed');
+      }
+
+    } catch (error) {
+      console.error('Error submitting shop:', error);
+      toast.error('Failed to save shop. Please try again.');
+    }
   };
-
   return (
     <div className="min-h-screen bg-[#0f172a] p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
@@ -427,7 +573,7 @@ useEffect(() => {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => triggerDelete(item._id || item.id, item)}
                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -455,6 +601,34 @@ useEffect(() => {
             </button>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm.show && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="bg-slate-800 rounded-xl max-w-sm w-full p-6 border border-slate-700 shadow-2xl">
+                    <h3 className="text-xl font-bold text-white mb-2">Delete Item?</h3>
+                    <p className="text-slate-300 mb-6">
+                        Are you sure you want to delete <span className="text-white font-medium">"{deleteConfirm.fullItem?.name}"</span>? 
+                        This action cannot be undone.
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                        <button 
+                            onClick={() => setDeleteConfirm({ show: false, itemId: null, fullItem: null })}
+                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={confirmDelete}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </div>
   );
