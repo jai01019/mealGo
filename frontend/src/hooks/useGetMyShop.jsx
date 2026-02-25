@@ -16,8 +16,7 @@ const [isLoading, setIsLoading] = useState(true);
           { withCredentials: true }
         );
          
-        //console.log("Fetched shop :", result.data);
-        //console.log("Fetched shop data:", result.data.shop);
+
         dispatch(setShopData(result.data.shop)); // ✅ ONLY SHOP
 
 

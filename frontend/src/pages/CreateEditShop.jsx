@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 function CreateEditShop() {
   
   const { city, state, address } = useSelector((state) => state.user);
-  console.log("CreateEditShop - User Data:", city, state, address);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -576,7 +575,7 @@ useEffect(() => {
                       onClick={() => triggerDelete(item._id || item.id, item)}
                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-5 h-5" /> 
                     </button>
                   </div>
                 ))

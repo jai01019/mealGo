@@ -33,9 +33,6 @@ const SignUp = () => {
       // Make sure your .env has VITE_SERVER_URL=http://localhost:8000
      const response = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/signup`, formData,{withCredentials:true});
 
-console.log("=== SIGNUP RESPONSE DEBUG ===");
-console.log("Full response:", response.data);
-console.log("============================");
 
 const userData = response.data.user || response.data;
 dispatch(setUserData(userData));
@@ -45,7 +42,7 @@ dispatch(setUserData(userData));
       // If signup succeeds (e.g., 201 Created), you can redirect
 dispatch(setUserData(response.data.user));
 
-      //console.log('Signup successful:', response.data);
+    
       navigate('/'); // or '/dashboard' if auto-login
     } catch (error) {
       console.error('Signup error:', error);
@@ -87,7 +84,7 @@ const handleGoogleSignUp = async () => {
       googleId: result.user.uid
     };
 
-    console.log("User Data for Backend:", userData);
+
 
     // 4. Send to your backend (similar to your handleSubmit logic)
     const {data} = await axios.post(`${import.meta.env.VITE_SERVER_URL}/api/auth/google-auth`, userData,{withCredentials:true});

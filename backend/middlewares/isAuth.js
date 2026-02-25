@@ -37,9 +37,6 @@ export const isAuth = (req, res, next) => {
   // ONLY read from cookies
   const token = req.cookies?.token;
 
-  // Debug log
-  console.log("Raw token from cookie:", token);
-  console.log("Type of token:", typeof token);
 
   if (!token) {
     return res.status(401).json({ error: "No token found" });
@@ -53,9 +50,7 @@ export const isAuth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded JWT payload:", decoded);
     req.user = decoded;
-    console.log("printing req.user:", req.user.userId);
     next();
   } catch (err) {
     console.error("JWT verification error:", err.message);

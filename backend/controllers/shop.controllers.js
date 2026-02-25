@@ -149,7 +149,6 @@ export const createEditShop = async (req, res) => {
 export const getMyShop=async (req,res)=>{
     try{
       const userId = req.user?.userId;
-   console.log("checking the user id in getMyShop Api:,",userId)
 if (!userId) {
  return res.status(400).json({
 success: false,
@@ -199,7 +198,6 @@ message: "getMyShop did not found",
   export const getAllItemsOfShop=async (req,res)=>{
     try{
            const userId = req.user?.userId;
-   console.log("checking the user id in getMyShop Api:,",userId)
 if (!userId) {
  return res.status(400).json({
 success: false,
@@ -237,3 +235,60 @@ message: "getAllItemsOfShop did not found",
     } 
   }
 
+export const getShopsByCity = async (req, res) => {
+  try {
+    const { city } = req.params;
+
+    // Validate city parameter
+    if (!city || city.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "City parameter is required",
+      });
+    }
+
+    // 🔹 Find all shops in the given city (case-insensitive)
+    const shops = await Shop.find({ 
+      city: { $regex: city, $options: "i" } 
+    })
+    .populate("owner", "fullName email") // Populate owner details (optional)
+    .select("-__v"); // Exclude version key
+
+    if (!shops || shops.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No shops found in ${city}`,
+      });
+    }
+
+    // 🔹 For each shop, fetch its items separately (since items are in separate collection)
+    const shopsWithItems = await Promise.all(
+      shops.map(async (shop) => {
+        const items = await Item.find({ shop: shop._id })
+          .select("-__v")
+          .lean();
+        
+        return {
+          ...shop.toObject(),
+          items,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Found ${shopsWithItems.length} shops in ${city}`,
+      count: shopsWithItems.length,
+      city: city,
+      shops: shopsWithItems,
+    });
+
+  } catch (error) {
+    console.error("Error during getShopsByCity:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
