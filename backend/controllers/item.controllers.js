@@ -167,11 +167,6 @@ export const deleteItem = async (req, res) => {
     // Delete item
     await Item.deleteOne({ _id: itemId });
 
-    // Optional: Remove item reference from shop if needed, 
-    // but usually items store the shop reference, so this is enough.
-    // If Shop model has an array of items, we should pull it.
-    // Assuming Shop model might not have direct items array reference or it's handled via query.
-    // But based on createItem, there is no push to Shop.items, so standalone delete is fine.
 
     return res.status(200).json({
       success: true,
