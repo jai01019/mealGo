@@ -34,7 +34,9 @@ const shopSchema=new mongoose.Schema({
          ref:"Item"
         
         },
-    ]
+    ],
+averageRating: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
 
 },{timestamps:true})
 
