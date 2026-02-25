@@ -101,9 +101,7 @@ export const signIn = async (req, res) => {
 
     const token =await genToken(user._id);
 
-    console.log("Generated token type:", typeof token);
-console.log("Generated token:", token);
-console.log("User ID:", user._id);
+
 
     res.cookie("token", token, {
       secure: false,
@@ -224,7 +222,6 @@ export const verifyOtp = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email, password);
     if (!email || !password) {
       return res
         .status(400)
@@ -243,7 +240,7 @@ export const resetPassword = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    console.log("user found for reset password:", user);
+
     // Ensure OTP was verified
     if (user.isOtpVerified !== true) {
       return res.status(400).json({
@@ -251,9 +248,9 @@ export const resetPassword = async (req, res) => {
         message: "OTP not verified. Please verify first.",
       });
     }
-    console.log("process.env genSalt:", process.env.genSalt);
+
     const saltRounds = Number(process.env.genSalt) || 10;
-    console.log("saltRounds:", saltRounds);
+
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -296,9 +293,7 @@ export const googleAuth = async (req, res) => {
 password: await bcrypt.hash("GOOGLE_AUTH", 10)      });
     }
     const token =await genToken(user._id);
-console.log("Generated token type:", typeof token);
-console.log("Generated token:", token);
-console.log("User ID:", user._id);
+
 
     res.cookie("token", token, {
       secure: false,

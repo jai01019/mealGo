@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux';
-import { setUserData } from '../redux/userSlice';
+import { setUserData,clearUser } from '../redux/userSlice';
 
 function useGetCurrentUser() {
   const dispatch = useDispatch();
@@ -16,7 +16,7 @@ function useGetCurrentUser() {
 
         dispatch(setUserData(result.data.user)); // ✅ ONLY USER
       } catch (err) {
-        console.log("error while fetching current user", err);
+          dispatch(clearUser());  
       }
     };
 
