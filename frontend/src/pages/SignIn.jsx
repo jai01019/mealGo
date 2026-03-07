@@ -29,12 +29,7 @@ const SignIn = () => {
 
       const data = await response.json();
       
-      // DEBUG: Check the response structure
-      console.log("=== SIGNIN RESPONSE ===");
-      console.log("Full Response:", data);
-      console.log("User object:", data.user);
-      console.log("Role:", data.user?.role || data.role);
-      console.log("======================");
+
 
       if (!response.ok) {
         throw new Error(data.message || 'Sign-in failed');

@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 export const getUserById = async (req,res)=>{
     try{
        const userId = req.user.userId;
-       console.log("the userId is in getUserById from token is  :", userId);
+    
        if(!userId){
                return res.status(400).json({
         success: false,
